@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interaktív Útmutató a Magyarországi Vadkempinghez</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Earthy Harmony -->
+    <!-- Application Structure Plan: Az alkalmazás egy tematikus, interaktív felépítést követ. 1. Nyitó szekció kontextussal. 2. Interaktív, füles "Szabály-felfedező" területtípusok szerint (Erdő, Nemzeti Park, Magánterület, Egyéb). Ez lehetővé teszi a felhasználóknak, hogy gyorsan megtalálják a releváns szabályokat. 3. Összehasonlító rész: sátorozás vs. bivakolás. 4. Interaktív diagram a lehetséges bírságokról. 5. Gyakorlati tanácsok (10 parancsolat) és GYIK. Ez a struktúra a felhasználó-központúságot és a nem-lineáris információ-felfedezést támogatja, ami komplex szabályozási témáknál előnyös. -->
+    <!-- Visualization & Content Choices: Szabályok: Egyszerűsített szöveges blokkok ikonokkal (✅/❌/⚠️). Területtípusok: Interaktív füles navigáció (HTML/JS). Összehasonlítás: Kétoszlopos HTML elrendezés. Bírságok: Chart.js vízszintes oszlopdiagram (Canvas) a kockázatok hatékony kommunikálására. Tanácsok: Lista formátum. Az interakciók (fülek váltása, diagram) a felhasználói bevonódást segítik. Chart.js y-tengely címkék tördelése a jobb olvashatóságért. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #FDFBF8; /* Warm off-white */
+            color: #4B4237; /* Dark brown */
+        }
+        .tab-active {
+            background-color: #386641; /* Forest Green */
+            color: #FDFBF8;
+            border-color: #386641;
+        }
+        .tab-inactive {
+            background-color: #FDFBF8;
+            color: #386641;
+            border-color: #A68A64; /* Earthy Tan */
+        }
+        .content-card {
+            background-color: #FFFFFF;
+            border-left: 4px solid #A68A64; /* Earthy Tan */
+        }
+        .main-accent-text {
+            color: #386641; /* Forest Green */
+        }
+        .subtle-bg {
+             background-color: #E7E0D5; /* Light beige */
+        }
+        .chart-container-wrapper { /* Wrapper for centering and max-width */
+            width: 100%;
+            max-width: 768px; /* md:max-w-2xl equivalent, can adjust */
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .chart-container { /* Actual chart container for height and relative positioning */
+            position: relative;
+            width: 100%;
+            height: 320px; /* h-80 */
+            max-height: 400px; /* max-h-96 roughly */
+        }
+        @media (min-width: 640px) { /* sm breakpoint */
+            .chart-container {
+                height: 384px; /* h-96 */
+            }
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+
+        <header class="text-center mb-16">
+            <h1 class="text-4xl md:text-5xl font-bold main-accent-text mb-4">Vadkemping Magyarországon</h1>
+            <p class="text-lg md:text-xl max-w-3xl mx-auto" style="color: #5a524a;">Interaktív útmutató a legális és felelősségteljes természetjáráshoz. Hol szabad sátrat verni és hol nem a hatályos szabályozások szerint?</p>
+        </header>
+
+        <section id="rules" class="mb-16">
+            <div class="max-w-4xl mx-auto">
+                <h2 class="text-3xl font-bold text-center mb-2 main-accent-text">Szabály-felfedező</h2>
+                <p class="text-center mb-8" style="color: #5a524a;">Válassz területtípust, hogy megismerd a rá vonatkozó legfontosabb szabályokat. Ez a szekció segít eligazodni a különböző területekre vonatkozó előírásokban, de nem helyettesíti a hatályos jogszabályok pontos ismeretét.</p>
+                
+                <div class="flex flex-wrap justify-center gap-2 md:gap-4 mb-8">
+                    <button id="tab-forest" class="tab-button tab-active text-sm sm:text-base font-semibold py-2 px-4 rounded-full border-2 transition-colors duration-300">🌲 Erdők</button>
+                    <button id="tab-national-park" class="tab-button tab-inactive text-sm sm:text-base font-semibold py-2 px-4 rounded-full border-2 transition-colors duration-300">🏞️ Nemzeti Parkok</button>
+                    <button id="tab-private" class="tab-button tab-inactive text-sm sm:text-base font-semibold py-2 px-4 rounded-full border-2 transition-colors duration-300">🏠 Magánterületek</button>
+                    <button id="tab-other" class="tab-button tab-inactive text-sm sm:text-base font-semibold py-2 px-4 rounded-full border-2 transition-colors duration-300">❓ Egyéb területek</button>
+                </div>
+
+                <div id="content-container">
+                    <div id="content-forest" class="content-panel">
+                        <div class="content-card p-6 rounded-lg shadow-md">
+                            <h3 class="text-2xl font-bold mb-4">Szabályok erdőterületen</h3>
+                            <p class="mb-4" style="color: #5a524a;">Az erdőtörvény viszonylag megengedő, de fontosak a részletek. A cél a természet védelme és a felelősségteljes viselkedés.</p>
+                            <ul class="space-y-3">
+                                <li class="flex items-start"><span class="text-2xl mr-3">✅</span><div><strong style="color: #3d372e;">24 órát meg nem haladó tartózkodás:</strong> Az erdőtörvény szerint saját felelősségre bárki tartózkodhat állami és magánerdőben, de a 24 órát meghaladó táborozáshoz már az erdőgazdálkodó engedélye szükséges.</div></li>
+                                <li class="flex items-start"><span class="text-2xl mr-3">⚠️</span><div><strong style="color: #3d372e;">Csoportos kemping:</strong> Ha tíznél több ember együtt kempingezne, mindenképpen be kell jelenteni az erdőgazdálkodónak.</div></li>
+                                <li class="flex items-start"><span class="text-2xl mr-3">❌</span><div><strong style="color: #3d372e;">Tűzgyújtás:</strong> Tüzet gyújtani kizárólag a kijelölt tűzrakóhelyeken szabad, és csak akkor, ha nincs érvényben tűzgyújtási tilalom. A tilalomról mindig tájékozódj előre!</div></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div id="content-national-park" class="content-panel hidden">
+                         <div class="content-card p-6 rounded-lg shadow-md">
+                            <h3 class="text-2xl font-bold mb-4">Szabályok Nemzeti Parkokban</h3>
+                            <p class="mb-4" style="color: #5a524a;">A természetvédelmi területeken a szabályok sokkal szigorúbbak. A vadkemping itt alapvetően tilos a természet értékeinek megóvása érdekében.</p>
+                            <ul class="space-y-3">
+                                <li class="flex items-start"><span class="text-2xl mr-3">❌</span><div><strong style="color: #3d372e;">Általános tilalom:</strong> Nemzeti parkok, tájvédelmi körzetek és természetvédelmi területek területén a vadkempingezés tilos. Ez vonatkozik a fokozottan védett területekre is.</div></li>
+                                <li class="flex items-start"><span class="text-2xl mr-3">✅</span><div><strong style="color: #3d372e;">Kijelölt helyek:</strong> Sátorozni csak a hivatalosan kijelölt kempingekben és sátorozóhelyeken szabad, melyek általában fizetősek és infrastruktúrával rendelkeznek.</div></li>
+                                <li class="flex items-start"><span class="text-2xl mr-3">⚠️</span><div><strong style="color: #3d372e;">Engedélykérés:</strong> Rendkívül indokolt esetben (pl. tudományos kutatás) a természetvédelmi hatóság adhat egyedi engedélyt a táborozásra, de ez túrázók számára szinte elérhetetlen.</div></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div id="content-private" class="content-panel hidden">
+                         <div class="content-card p-6 rounded-lg shadow-md">
+                            <h3 class="text-2xl font-bold mb-4">Szabályok magánterületen</h3>
+                            <p class="mb-4" style="color: #5a524a;">A magántulajdon szent és sérthetetlen. A szabályok itt a legegyértelműbbek: a tulajdonosé a döntés joga.</p>
+                            <ul class="space-y-3">
+                                <li class="flex items-start"><span class="text-2xl mr-3">✅</span><div><strong style="color: #3d372e;">Tulajdonos engedélye:</strong> Ha a terület tulajdonosa (legyen az szántó, rét, vagy magánerdő) engedélyt ad a sátorozásra, akkor az teljesen legális. Az engedélyt érdemes írásban is rögzíteni.</div></li>
+                                <li class="flex items-start"><span class="text-2xl mr-3">❌</span><div><strong style="color: #3d372e;">Engedély nélküli tartózkodás:</strong> Engedély nélkül magánterületen tartózkodni és táborozni birtokháborításnak minősül, ami jogi következményekkel járhat.</div></li>
+                                <li class="flex items-start"><span class="text-2xl mr-3">⚠️</span><div><strong style="color: #3d372e;">Körbekerítetlen terület:</strong> Még ha egy terület nincs is körbekerítve, attól még lehet magántulajdon. Mindig próbálj meggyőződni a tulajdonviszonyokról.</div></li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div id="content-other" class="content-panel hidden">
+                         <div class="content-card p-6 rounded-lg shadow-md">
+                            <h3 class="text-2xl font-bold mb-4">Egyéb területek (pl. vízpart)</h3>
+                            <p class="mb-4" style="color: #5a524a;">A nem egyértelműen besorolt területek, mint a folyó- és tópartok, gyakran szürke zónának számítanak, de általában speciális szabályok vonatkoznak rájuk.</p>
+                            <ul class="space-y-3">
+                                <li class="flex items-start"><span class="text-2xl mr-3">⚠️</span><div><strong style="color: #3d372e;">Vízpartok:</strong> A nagyobb folyók (Duna, Tisza) és tavak (Balaton, Velencei-tó) partjára külön törvények vonatkoznak. A legtöbb helyen tilos a kempingezés, kivéve a kijelölt helyeket.</div></li>
+                                <li class="flex items-start"><span class="text-2xl mr-3">❌</span><div><strong style="color: #3d372e;">Horgászhelyek:</strong> A horgászstégek és kijelölt horgászhelyek nem kempingezésre szolgálnak, még ha éjszakai horgászat engedélyezett is. A sátorverés itt általában nem megengedett.</div></li>
+                                <li class="flex items-start"><span class="text-2xl mr-3">✅</span><div><strong style="color: #3d372e;">Önkormányzati területek:</strong> Parkok, közterületek esetén az adott önkormányzat rendeletei az irányadók. Alapvetően ezeken a helyeken is tilos a táborozás.</div></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="comparison" class="mb-16 py-12 subtle-bg rounded-lg">
+            <div class="max-w-4xl mx-auto px-6">
+                 <h2 class="text-3xl font-bold text-center mb-2 main-accent-text">Sátorozás vs. Bivakolás</h2>
+                 <p class="text-center mb-8" style="color: #5a524a;">Nem mindegy, hogyan éjszakázol a szabadban. Ez a rész a két tevékenység közötti jogi és gyakorlati különbségeket tisztázza, hogy megalapozott döntést hozhass.</p>
+                 <div class="grid md:grid-cols-2 gap-8">
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-2xl font-bold mb-3 flex items-center">🏕️ Sátorozás (Táborozás)</h3>
+                        <p style="color: #5a524a;">Tervezett, többnyire kényelmi célú tartózkodás, amely során lakóalkalmatosságot (sátort) állítasz fel. Jellemzően több felszereléssel jár (szék, asztal), és a törvény ezt tekinti a "valódi" kempingezésnek, amire a szigorúbb szabályok vonatkoznak.</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h3 class="text-2xl font-bold mb-3 flex items-center">⭐ Bivakolás</h3>
+                        <p style="color: #5a524a;">Védőeszközben (pl. bivakzsák, ponyva) való éjszakázás sátor nélkül. Gyakran kényszerhelyzet (pl. eltévedés, időjárás) vagy hegymászó, teljesítménytúrázó tevékenység része. Sok helyen, ahol a sátorozás tilos, a bivakolást (főleg vészhelyzetben) eltűrik, de ez nem jogi garancia.</p>
+                    </div>
+                 </div>
+            </div>
+        </section>
+        
+        <section id="fines" class="mb-16">
+             <div class="max-w-4xl mx-auto">
+                <h2 class="text-3xl font-bold text-center mb-2 main-accent-text">Lehetséges Következmények</h2>
+                <p class="text-center mb-8" style="color: #5a524a;">A szabályszegésnek ára van. A diagram szemlélteti a lehetséges bírságok mértékét különböző vétségek esetén. Az itt látható összegek tájékoztató jellegűek, és a vétség súlyosságától, valamint a terület védettségi fokától függően változhatnak.</p>
+                <div class="chart-container-wrapper">
+                    <div class="chart-container bg-white p-4 rounded-lg shadow-md">
+                        <canvas id="finesChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="advice" class="py-12 subtle-bg rounded-lg">
+            <div class="max-w-4xl mx-auto px-6">
+                <h2 class="text-3xl font-bold text-center mb-8 main-accent-text">A Felelősségteljes Vadkempingező Útmutatója</h2>
+                <p class="text-center mb-8" style="color: #5a524a;">A természetjárás öröme felelősséggel is jár. Az alábbi pontok segítenek abban, hogy tevékenységeddel a lehető legkisebb terhelést okozd a környezetnek, és mások számára is élvezhető maradjon a természet.</p>
+                <ul class="grid md:grid-cols-2 gap-x-8 gap-y-4" style="color: #5a524a;">
+                    <li class="flex items-start"><span class="main-accent-text font-bold text-xl mr-3">1.</span> Ne hagyj nyomot! Amit beviszel, azt hozd is ki.</li>
+                    <li class="flex items-start"><span class="main-accent-text font-bold text-xl mr-3">2.</span> Kerüld a tűzgyújtást! Ha muszáj, csak kijelölt helyen tedd, és győződj meg a tilalmakról.</li>
+                    <li class="flex items-start"><span class="main-accent-text font-bold text-xl mr-3">3.</span> Légy halk! Tiszteld a vadon élő állatokat és a többi embert.</li>
+                    <li class="flex items-start"><span class="main-accent-text font-bold text-xl mr-3">4.</span> A "toalettet" ásd el! Használj ásót, és temesd be megfelelően, távol a vízforrásoktól.</li>
+                    <li class="flex items-start"><span class="main-accent-text font-bold text-xl mr-3">5.</span> Ne használj vegyszereket! Mosogatni és mosakodni is távol a vízforrásoktól, biológiailag lebomló szerekkel.</li>
+                    <li class="flex items-start"><span class="main-accent-text font-bold text-xl mr-3">6.</span> Maradj a kijelölt utakon, ahol csak lehetséges, hogy védd a növényzetet.</li>
+                    <li class="flex items-start"><span class="main-accent-text font-bold text-xl mr-3">7.</span> Tervezz előre! Ismerd a területet, az időjárás-előrejelzést és a helyi szabályokat.</li>
+                    <li class="flex items-start"><span class="main-accent-text font-bold text-xl mr-3">8.</span> Tiszteld a magántulajdont! Mindig kérj engedélyt, ha magánterületen szeretnél tartózkodni.</li>
+                    <li class="flex items-start"><span class="main-accent-text font-bold text-xl mr-3">9.</span> Légy diszkrét! Válassz rejtett táborhelyet, és csak rövid ideig maradj egy helyen.</li>
+                    <li class="flex items-start"><span class="main-accent-text font-bold text-xl mr-3">10.</span> Mindig tájékozódj a helyi szabályokról, aktuális tilalmakról (pl. tűzgyújtási tilalom, területi korlátozások).</li>
+                </ul>
+            </div>
+        </section>
+
+    </div>
+
+    <footer class="text-center py-6 border-t" style="border-color: #e5e7eb;">
+        <p class="text-sm" style="color: #6b7280;">Ez az oldal tájékoztató céllal készült és nem minősül jogi tanácsadásnak. Mindig ellenőrizd a hatályos jogszabályokat.</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const tabs = document.querySelectorAll('.tab-button');
+            const contents = document.querySelectorAll('.content-panel');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    const targetId = tab.id.replace('tab-', 'content-');
+                    
+                    tabs.forEach(t => {
+                        t.classList.remove('tab-active');
+                        t.classList.add('tab-inactive');
+                    });
+
+                    tab.classList.add('tab-active');
+                    tab.classList.remove('tab-inactive');
+                    
+                    contents.forEach(content => {
+                        if (content.id === targetId) {
+                            content.classList.remove('hidden');
+                        } else {
+                            content.classList.add('hidden');
+                        }
+                    });
+                });
+            });
+
+            const ctx = document.getElementById('finesChart').getContext('2d');
+            const finesChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: [
+                        'Illegális tűzrakás közterületen/erdőben', 
+                        'Szemetelés, hulladék elhagyása', 
+                        'Engedély nélküli táborozás (24h+) erdőben',
+                        'Táborozás nemzeti parkban/természetvédelmi területen', 
+                        'Táborozás fokozottan védett term. területen'
+                    ],
+                    datasets: [{
+                        label: 'Bírság (becsült max. összeg Ft-ban)',
+                        data: [50000, 30000, 40000, 100000, 150000],
+                        backgroundColor: [
+                            '#BC4749', // Reddish
+                            '#A68A64', // Tan
+                            '#6A994E', // Lighter Green
+                            '#386641', // Forest Green
+                            '#2B412A'  // Darker Green
+                        ],
+                        borderColor: '#FDFBF8',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: '#4B4237',
+                            titleColor: '#FDFBF8',
+                            bodyColor: '#FDFBF8',
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.x !== null) {
+                                        label += new Intl.NumberFormat('hu-HU', { style: 'currency', currency: 'HUF', maximumFractionDigits: 0 }).format(context.parsed.x);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            grid: {
+                                color: '#E7E0D5'
+                            },
+                            ticks: {
+                                color: '#4B4237',
+                                callback: function(value, index, values) {
+                                    return value / 1000 + ' E Ft';
+                                }
+                            }
+                        },
+                        y: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                color: '#4B4237',
+                                autoSkip: false,
+                                callback: function(value, index, values) {
+                                    const label = this.getLabelForValue(value);
+                                    if (label.length > 20) { // Adjusted for better fit with potential wrapping
+                                        const words = label.split(' ');
+                                        let lines = [];
+                                        let currentLine = '';
+                                        for (const word of words) {
+                                            if ((currentLine + word).length > 20 && currentLine.length > 0) {
+                                                lines.push(currentLine.trim());
+                                                currentLine = word + ' ';
+                                            } else {
+                                                currentLine += word + ' ';
+                                            }
+                                        }
+                                        lines.push(currentLine.trim());
+                                        return lines; 
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+</html>
